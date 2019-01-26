@@ -1,0 +1,23 @@
+{
+  "name": "choirgenius-to-onecallnow",
+  "version": "1.0.0",
+  "description": "convert choirgenius members to oncall now imports",
+  "main": "index.js",
+  "scripts": {
+    "prettier": "prettier \"**/*.{js,json,css,md}\" --write"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "csvjson": "^5.1.0",
+    "csvtojson": "^2.0.8",
+    "fs-extra": "^7.0.1",
+    "yargs": "^12.0.5"
+  },
+  "devDependencies": {
+    "prettier": "^1.16.1"
+  },
+  "bin": {
+    "choirgenius-to-onecallnow": "node ./index.js"
+  }
+}
