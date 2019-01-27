@@ -4,42 +4,58 @@ const csv = require('csvtojson');
 const csvjson = require('csvjson');
 const fs = require('fs-extra');
 const yargs = require('yargs');
+const _ = require('lodash');
 
-const argv = yargs.alias('f', 'file').alias('o', 'out').argv;
+const argv = yargs
+  .alias('f', 'file')
+  .alias('o', 'out')
+  .argv;
 
 const main = async () => {
-  const { file, out } = argv;
+  const { file, out, subgroups = '', only = '' } = argv;
+
+  const roleFilter = only.split(',');
+  const subgroupFilter = subgroups.split(',');
 
   const fileData = await fs.readFile(file, 'utf8');
 
-  const data = await csvjson.toObject(fileData, {
+  const csvData = await csvjson.toObject(fileData, {
     quote: '"'
   });
 
-  const outputData = data.map(user => {
-    const onCallData = {
-      'First Name': user['First name'],
-      'Last Name': user['Last name'],
-      Email: user['Email'],
-      'Mobile Phone': user['Mobile phone'],
-      'Work Phone': user['Work phone']
-    };
+  const userData = csvData.map(user => ({
+    ...user,
+    Roles: user.Roles.split(',')
+  }));
 
-    user.Roles.split(',').forEach(role => {
-      onCallData[role] = 'X';
+  const outputData = userData
+    .filter(user => _.intersection(user.Roles, roleFilter).length > 0)
+    .map(user => {
+      const onCallData = {
+        'External ID': user['User ID'],
+        'First Name': user['First name'],
+        'Last Name': user['Last name'],
+        Email: user['Email'],
+        'Phone': user['Mobile phone'] || user['Home phone'] || user['Work phone']
+      };
+
+      user.Roles
+        .filter(role => subgroupFilter.includes(role))
+        .forEach(role => {
+          onCallData[role] = 'X';
+        });
+
+      return onCallData;
     });
 
-    return onCallData;
-  });
-
-  const csvData = csvjson.toCSV(outputData, {
+  const oneCallCSV = csvjson.toCSV(outputData, {
     headers: 'key'
   });
 
   if (out) {
-    fs.writeFile(out, csvData, 'utf8');
+    fs.writeFile(out, oneCallCSV, 'utf8');
   } else {
-    console.log(csvData);
+    console.log(oneCallCSV);
   }
 };
 
